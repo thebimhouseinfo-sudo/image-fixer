@@ -3,102 +3,344 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Image Sharpener</title>
+    <title>AI Image Deblur & Enhance</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; background: #f4f4f9; text-align: center; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .upload-section { border: 2px dashed #ccc; padding: 20px; margin-bottom: 20px; cursor: pointer; }
-        .canvas-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-top: 20px; }
-        canvas { max-width: 100%; height: auto; border-radius: 8px; background: #eee; }
-        h3 { color: #333; }
-        .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
-        .btn:hover { background: #0056b3; }
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --background-color: #f8f9fa;
+            --card-background: #ffffff;
+            --text-color: #343a40;
+            --border-color: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--card-background);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 1000px;
+            width: 90%;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        p.subtitle {
+            color: var(--secondary-color);
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 10px;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+
+        .upload-area input[type="file"] {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 1.2em;
+            font-weight: 400;
+            color: var(--secondary-color);
+        }
+
+        .image-preview-section {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .image-card {
+            flex: 1 1 45%; /* Allows two cards per row on larger screens */
+            min-width: 300px;
+            background-color: var(--background-color);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        .image-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .image-card img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            min-height: 150px; /* Placeholder height */
+            background-color: #e9ecef;
+            object-fit: contain; /* Ensures entire image is visible */
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin-top: 30px;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background-color: var(--secondary-color);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading-spinner {
+            display: none; /* Hidden by default */
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 20px;
+            height: 20px;
+            -webkit-animation: spin 1s linear infinite; /* Safari */
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        /* Safari */
+        @-webkit-keyframes spin {
+            0% { -webkit-transform: rotate(0deg); }
+            100% { -webkit-transform: rotate(360deg); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .btn.loading .loading-spinner {
+            display: inline-block;
+        }
+
+        .btn.loading span {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #errorMessage {
+            color: #dc3545;
+            margin-top: 20px;
+            font-weight: 600;
+        }
+
+        /* Media Queries for responsiveness */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                width: 95%;
+            }
+            .image-card {
+                flex: 1 1 100%; /* Stacks cards on smaller screens */
+            }
+            .upload-area {
+                padding: 30px 15px;
+            }
+            h1 {
+                font-size: 1.8em;
+            }
+            p.subtitle {
+                font-size: 1em;
+            }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Image Fixer</h1>
-    <p>Upload a blurry image to apply a sharpening filter.</p>
+    <h1>AI Image Enhancer</h1>
+    <p class="subtitle">Upload a blurry or low-resolution image to get an AI-enhanced, sharper version.</p>
     
-    <div class="upload-section" onclick="document.getElementById('fileInput').click()">
-        <input type="file" id="fileInput" accept="image/*" style="display:none">
-        <p>Click to Upload Image</p>
+    <div class="upload-area" id="uploadArea">
+        <input type="file" id="fileInput" accept="image/*">
+        <span class="upload-icon">⬆️</span>
+        <p class="upload-text">Drag & drop an image or click to upload</p>
     </div>
 
-    <div class="canvas-container">
-        <div>
-            <h3>Original</h3>
-            <canvas id="originalCanvas"></canvas>
+    <div class="image-preview-section">
+        <div class="image-card">
+            <h3>Original Image</h3>
+            <img id="originalImage" src="https://via.placeholder.com/400x300?text=Upload+Image" alt="Original Image">
         </div>
-        <div>
-            <h3>Sharpened</h3>
-            <canvas id="outputCanvas"></canvas>
+        <div class="image-card">
+            <h3>Enhanced Image</h3>
+            <img id="enhancedImage" src="https://via.placeholder.com/400x300?text=AI+Result+Here" alt="Enhanced Image">
         </div>
     </div>
-    <br>
-    <button class="btn" id="downloadBtn" style="display:none">Download Fixed Image</button>
+    
+    <p id="errorMessage" style="display:none;"></p>
+
+    <button class="btn" id="enhanceBtn" disabled>
+        <span>Enhance Image <span class="loading-spinner"></span></span>
+    </button>
+    <button class="btn" id="downloadBtn" style="display:none; background-color: var(--secondary-color);">Download Enhanced</button>
 </div>
 
 <script>
     const fileInput = document.getElementById('fileInput');
-    const oriCanvas = document.getElementById('originalCanvas');
-    const outCanvas = document.getElementById('outputCanvas');
-    const oriCtx = oriCanvas.getContext('2d');
-    const outCtx = outCanvas.getContext('2d');
+    const uploadArea = document.getElementById('uploadArea');
+    const originalImage = document.getElementById('originalImage');
+    const enhancedImage = document.getElementById('enhancedImage');
+    const enhanceBtn = document.getElementById('enhanceBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const errorMessage = document.getElementById('errorMessage');
 
+    let uploadedFile = null;
+
+    // Simulate an AI backend endpoint (replace with your actual backend URL)
+    const AI_BACKEND_URL = 'YOUR_AI_BACKEND_URL_HERE'; // e.g., 'https://your-render-app.onrender.com/enhance'
+
+    // Handle file input change
     fileInput.addEventListener('change', (e) => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const img = new Image();
-            img.onload = () => {
-                // Set canvas sizes
-                oriCanvas.width = outCanvas.width = img.width;
-                oriCanvas.height = outCanvas.height = img.height;
-                
-                // Draw original
-                oriCtx.drawImage(img, 0, 0);
-                
-                // Apply Sharpening
-                sharpen(img);
-                document.getElementById('downloadBtn').style.display = 'inline-block';
+        const file = e.target.files[0];
+        if (file) {
+            uploadedFile = file;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                originalImage.src = event.target.result;
+                enhancedImage.src = "https://via.placeholder.com/400x300?text=Processing..."; // Placeholder for processing
+                enhanceBtn.disabled = false;
+                downloadBtn.style.display = 'none';
+                errorMessage.style.display = 'none';
             };
-            img.src = event.target.result;
-        };
-        reader.readAsDataURL(e.target.files[0]);
+            reader.readAsDataURL(file);
+        }
     });
 
-    function sharpen(img) {
-        const weights = [0, -1, 0, -1, 5, -1, 0, -1, 0]; // Sharpening Kernel
-        const imageData = oriCtx.getImageData(0, 0, img.width, img.height);
-        const outputData = oriCtx.createImageData(img.width, img.height);
-        
-        const w = img.width;
-        const h = img.height;
-        const dst = outputData.data;
-        const src = imageData.data;
+    // Handle drag and drop
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = var(--primary-color);
+        uploadArea.style.backgroundColor = 'rgba(0, 123, 255, 0.05)';
+    });
 
-        for (let y = 1; y < h - 1; y++) {
-            for (let x = 1; x < w - 1; x++) {
-                for (let c = 0; c < 3; c++) { // RGB channels
-                    let i = (y * w + x) * 4 + c;
-                    dst[i] = 
-                        src[i - w * 4 - 4] * weights[0] + src[i - w * 4] * weights[1] + src[i - w * 4 + 4] * weights[2] +
-                        src[i - 4] * weights[3]         + src[i] * weights[4]         + src[i + 4] * weights[5] +
-                        src[i + w * 4 - 4] * weights[6] + src[i + w * 4] * weights[7] + src[i + w * 4 + 4] * weights[8];
-                }
-                dst[(y * w + x) * 4 + 3] = 255; // Alpha
-            }
+    uploadArea.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = var(--border-color);
+        uploadArea.style.backgroundColor = 'transparent';
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = var(--border-color);
+        uploadArea.style.backgroundColor = 'transparent';
+        fileInput.files = e.dataTransfer.files;
+        fileInput.dispatchEvent(new Event('change')); // Trigger change event
+    });
+
+    // Handle enhance button click
+    enhanceBtn.addEventListener('click', async () => {
+        if (!uploadedFile) {
+            alert('Please upload an image first!');
+            return;
         }
-        outCtx.putImageData(outputData, 0, 0);
-    }
 
-    document.getElementById('downloadBtn').onclick = () => {
-        const link = document.createElement('a');
-        link.download = 'sharpened.png';
-        link.href = outCanvas.toDataURL();
-        link.click();
-    };
+        enhanceBtn.disabled = true;
+        enhanceBtn.classList.add('loading');
+        downloadBtn.style.display = 'none';
+        errorMessage.style.display = 'none';
+        enhancedImage.src = "https://via.placeholder.com/400x300?text=Processing..."; // Show processing state
+
+        const formData = new FormData();
+        formData.append('file', uploadedFile);
+
+        try {
+            const response = await fetch(AI_BACKEND_URL, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Server error: ${response.status} - ${errorText}`);
+            }
+
+            const blob = await response.blob();
+            const imageUrl = URL.createObjectURL(blob);
+            enhancedImage.src = imageUrl;
+            downloadBtn.href = imageUrl;
+            downloadBtn.style.display = 'inline-block';
+
+        } catch (error) {
+            console.error('Error enhancing image:', error);
+            errorMessage.textContent = `Error: Could not enhance image. Please try again. (${error.message})`;
+            errorMessage.style.display = 'block';
+            enhancedImage.src = "https://via.placeholder.com/400x300?text=Error"; // Show error state
+        } finally {
+            enhanceBtn.disabled = false;
+            enhanceBtn.classList.remove('loading');
+        }
+    });
+
+    // Handle download button click (already set by enhanceBtn logic)
+    downloadBtn.addEventListener('click', () => {
+        if (enhancedImage.src && enhancedImage.src.startsWith('blob:')) {
+            const a = document.createElement('a');
+            a.href = enhancedImage.src;
+            a.download = `enhanced_${uploadedFile.name || 'image.png'}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        } else {
+            alert('No enhanced image to download!');
+        }
+    });
 </script>
 
 </body>
