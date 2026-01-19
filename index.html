@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XREAL Spatial Web Viewer</title>
+    <style>
+        :root { --primary: #00f2ff; --bg: #0a0a0a; }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: white; overflow: hidden; }
+        
+        /* UI Layer */
+        #ui-layer {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; transition: opacity 0.5s;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px;
+            padding: 40px; text-align: center; width: 80%; max-width: 400px;
+        }
+        h1 { font-weight: 300; letter-spacing: 2px; color: var(--primary); }
+        
+        /* Buttons */
+        .btn-upload {
+            background: var(--primary); color: black; border: none; padding: 12px 24px;
+            border-radius: 30px; cursor: pointer; font-weight: bold; margin-top: 20px;
+        }
+        .btn-view {
+            background: transparent; border: 1px solid var(--primary); color: var(--primary);
+            padding: 12px 24px; border-radius: 30px; margin-top: 10px; cursor: pointer; display: none;
+        }
+
+        /* 3D Viewer Layer */
+        #spatial-viewer {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: black; z-index: 100;
+        }
+        .eye { width: 50%; height: 100%; object-fit: contain; }
+        
+        /* Instructions for XREAL */
+        #hint { font-size: 0.8rem; color: #888; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div class="glass-card">
+            <h1>SPATIAL VIEW</h1>
+            <p>Upload a photo to view it in 3D SBS on your XREAL glasses.</p>
+            <input type="file" id="fileInput" hidden accept="image/*">
+            <button class="btn-upload" onclick="document.getElementById('fileInput').click()">CHOOSE IMAGE</button>
+            <br>
+            <button id="viewBtn" class="btn-view" onclick="startSpatialView()">ENTER SPATIAL MODE</button>
+            <p id="hint">After entering, switch glasses to 3D Mode (Long press brightness +)</p>
+        </div>
+    </div>
+
+    <div id="spatial-viewer" onclick="exitSpatialView()">
+        <div style="display: flex; width: 100%; height: 100%;">
+            <img id="leftEye" class="eye">
+            <img id="rightEye" class="eye">
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const viewBtn = document.getElementById('viewBtn');
+        const leftEye = document.getElementById('leftEye');
+        const rightEye = document.getElementById('rightEye');
+
+        fileInput.onchange = (e) => {
+            const url = URL.createObjectURL(e.target.files[0]);
+            leftEye.src = url;
+            rightEye.src = url;
+            viewBtn.style.display = 'inline-block';
+        };
+
+        function startSpatialView() {
+            const viewer = document.getElementById('spatial-viewer');
+            viewer.style.display = 'block';
+            if (viewer.requestFullscreen) viewer.requestFullscreen();
+        }
+
+        function exitSpatialView() {
+            document.exitFullscreen();
+            document.getElementById('spatial-viewer').style.display = 'none';
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                document.getElementById('spatial-viewer').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
